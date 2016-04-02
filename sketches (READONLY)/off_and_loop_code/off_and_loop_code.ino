@@ -6,7 +6,7 @@ int pins[num_tentacles][num_pins_per_tentacle] = {
   {5, 6, 7, 8}
 };
 
-int delay_between_colors[num_tentacles] = {default_delay_between_colors, default_delay_between_colors};
+int delay_between_colors[num_tentacles] = {0, 0};
 unsigned long start_time[num_tentacles] = {0, 0};
 
 
@@ -24,8 +24,8 @@ const int LOOP = 2;
 const int pattern_length = 4;
 int index_of_current_pattern_component[num_tentacles] = {0, 0};
 int curr_pattern_component[num_tentacles][num_pattern_component_dimensions] = {
-  {0, 1, default_delay_between_colors},
-  {0, 1, default_delay_between_colors}
+  {0, 1, default_delay_between_colors,OFF},
+  {0, 1, default_delay_between_colors,OFF}
 };
 
 int pattern[num_tentacles][pattern_length][num_pattern_component_dimensions] = {
@@ -33,7 +33,7 @@ int pattern[num_tentacles][pattern_length][num_pattern_component_dimensions] = {
     {2, 3, 200, ON},
     {2, 1, 200, ON},
     {3, 2, 200, ON},
-    {2, 3, 200, ON}
+    {2, 3, 2000, ON}
   },
 
   {
@@ -108,7 +108,7 @@ void setupNextPatternComponent(int index_of_tentacle) {
 }
 
 bool on(int index_of_tentacle) {
-  int instruction = pins[index_of_tentacle][curr_pattern_component[index_of_tentacle][INDEX_OF_INSTRUCTION]];
+  int instruction = curr_pattern_component[index_of_tentacle][INDEX_OF_INSTRUCTION];
   return instruction != OFF;
 }
 
