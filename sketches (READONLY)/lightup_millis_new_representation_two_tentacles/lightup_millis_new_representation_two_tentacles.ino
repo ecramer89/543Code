@@ -3,7 +3,7 @@ const int num_pins_per_tentacle = 4;
 int default_delay_between_colors = 400;
 int pins[num_tentacles][num_pins_per_tentacle] = {
   {1, 2, 3, 4},
-  {5, 6, 7, 8}
+  {8, 9, 10, 11}
 };
 
 int delay_between_colors[num_tentacles] = {0, 0};

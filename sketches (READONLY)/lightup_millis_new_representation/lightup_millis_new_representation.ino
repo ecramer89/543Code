@@ -1,4 +1,4 @@
-int pins[4] = {1, 2, 3, 4};
+int pins[4] = {8,9,10,11};
 int delay_between_colors = 400;
 unsigned long start_time;
 
