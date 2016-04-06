@@ -9,25 +9,103 @@ const int FIRST = 0;
 const int SECOND = 1;
 const int THIRD = 2;
 const int FOURTH = 3;
+
+const int OFF = -12;
+const int ON = 14;
+
 const int num_tentacles = 2;
 const int num_pins_per_tentacle = 4;
+const int num_pattern_component_dimensions = 4;
+const int pattern_length = 8;
 
 
-/*int A_ROWS[] = {2, 3, 1, 0};
-  int A_COLORS[][3] = {
-  {0, 1, 3},
-  {2, 0, 1},
-  {3, 2, 0},
-  {1, 3, 2}
-  };
+/*Sample patterns*/
+const int ZIG_ZAG = 0;
+const int LAP = 1;
+const int MANHATTAN_WALK = 2;
 
-  int B_ROWS[] = {3, 0, 1, 2};
-  int B_COLORS[][3] = {
-  {0, 1, 2},
-  {1, 2, 3},
-  {2, 3, 0},
-  {3, 0, 1}
-  };*/
+int pattern_to_use = MANHATTAN_WALK;
+
+int ZIG_ZAG_PATTERN[num_tentacles][pattern_length][num_pattern_component_dimensions] = {
+  { //row | color | duration | on or off. (don't need to enter a meaningful row or colour if you want a section to be off, but do need to enter a duration)
+    {FIRST, RED, 600, ON},
+    {OFF, OFF, 600, OFF},
+    {THIRD, RED, 600, ON},
+    {OFF, OFF, 600, OFF},
+
+    {FOURTH, RED, 600, ON},
+    {OFF, OFF, 600, OFF},
+    {SECOND, RED, 600, ON},
+    {OFF, OFF, 600, OFF}
+  },
+  {
+    {OFF, OFF, 600, OFF},
+    {SECOND, RED, 600, ON},
+    {OFF, OFF, 600, OFF},
+    {FOURTH, RED, 600, ON},
+
+    {OFF, OFF, 600, OFF},
+    {THIRD, RED, 600, ON},
+    {OFF, OFF, 600, OFF},
+    {FIRST, RED, 600, ON}
+  }
+};
+
+
+int LAP_PATTERN[num_tentacles][pattern_length][num_pattern_component_dimensions] = {
+  { //row | color | duration | on or off. (don't need to enter a meaningful row or colour if you want a section to be off, but do need to enter a duration)
+    {FIRST, BLUE, 600, ON},
+    {SECOND, BLUE, 600, ON},
+    {THIRD, BLUE, 600, ON},
+    {FOURTH, BLUE, 600, ON},
+
+    {FOURTH, RED, 600, OFF},
+    {OFF, OFF, 600, OFF},
+    {SECOND, RED, 600, OFF},
+    {OFF, OFF, 600, OFF}
+  },
+  {
+    {OFF, OFF, 600, OFF},
+    {SECOND, RED, 600, OFF},
+    {OFF, OFF, 600, OFF},
+    {FOURTH, RED, 600, OFF},
+
+    {FOURTH, BLUE, 600, ON},
+    {THIRD, BLUE, 600, ON},
+    {SECOND, BLUE, 600, ON},
+    {FIRST, BLUE, 600, ON}
+  }
+};
+
+
+
+int MANHATTAN_WALK_PATTERN[num_tentacles][pattern_length][num_pattern_component_dimensions] = {
+  { //row | color | duration | on or off. (don't need to enter a meaningful row or colour if you want a section to be off, but do need to enter a duration)
+    {FIRST, GREEN, 600, ON},
+    {SECOND, GREEN, 600, ON},
+    {THIRD, BLUE, 600, OFF},
+    {FOURTH, BLUE, 600, OFF},
+
+    {FOURTH, GREEN, 600, ON},
+    {OFF, OFF, 600, OFF},
+    {SECOND, RED, 600, OFF},
+    {OFF, OFF, 600, OFF}
+  },
+  {
+    {OFF, OFF, 600, OFF},
+    {SECOND, RED, 600, OFF},
+    {SECOND, GREEN, 600, ON},
+    {THIRD, GREEN, 600, ON},
+
+    {FOURTH, BLUE, 600, OFF},
+    {FOURTH, GREEN, 600, ON},
+    {SECOND, BLUE, 600, ON},
+    {FIRST, BLUE, 600, OFF}
+  }
+
+
+
+};
 
 
 int ROWS[num_tentacles][num_pins_per_tentacle] = {
@@ -63,34 +141,11 @@ int pins[num_tentacles][num_pins_per_tentacle] = {
 int duration_of_pattern_component[num_tentacles] = {0, 0};
 unsigned long start_time_of_pattern_component[num_tentacles] = {0, 0};
 
-const int num_pattern_component_dimensions = 4;
+
 const int INDEX_OF_CATHODE_PIN = 0;
 const int INDEX_OF_ANODE_PIN = 1;
 const int INDEX_OF_DURATION = 2;
 const int INDEX_OF_INSTRUCTION = 3;
-
-const int OFF = -12;
-const int ON = 14;
-const int LOOP = 22;
-
-const int pattern_length = 4;
-
-//FIRST ARRAY= tentacle A.
-//SECOND ARRAY=tentacle B.
-int user_defined_pattern[num_tentacles][pattern_length][num_pattern_component_dimensions] = {
-  { //row | color | duration | on or off. (don't need to enter a meaningful row or colour if you want a section to be off, but do need to enter a duration)
-    {FIRST, RED, 600, ON},
-    {SECOND, RED, 600, ON},
-    {OFF, OFF, 600, OFF},
-    {THIRD, RED, 600, ON}
-  },
-  {
-    {THIRD, GREEN, 200, ON},
-    {FOURTH, GREEN, 3000, ON},
-    {FOURTH, RED, 200, ON},
-    {OFF, OFF, 600, OFF}
-  }
-};
 
 
 int index_of_current_pattern_component[num_tentacles] = {0, 0};
@@ -105,17 +160,25 @@ int curr_pattern_component[num_tentacles][num_pattern_component_dimensions] = {
 //catode index, +1%4=red, +2%4=green, +3%4=blue anodes.
 int pattern[num_tentacles][pattern_length][num_pattern_component_dimensions] = {
   {
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0}
+    {0, 0, 0, OFF},
+    {0, 0, 0, OFF},
+    {0, 0, 0, OFF},
+    {0, 0, 0, OFF},
+    {0, 0, 0, OFF},
+    {0, 0, 0, OFF},
+    {0, 0, 0, OFF},
+    {0, 0, 0, OFF}
   },
 
   {
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0},
-    {0, 0, 0, 0}
+    {0, 0, 0, OFF},
+    {0, 0, 0, OFF},
+    {0, 0, 0, OFF},
+    {0, 0, 0, OFF},
+    {0, 0, 0, OFF},
+    {0, 0, 0, OFF},
+    {0, 0, 0, OFF},
+    {0, 0, 0, OFF}
   }
 
 };
@@ -123,11 +186,23 @@ int pattern[num_tentacles][pattern_length][num_pattern_component_dimensions] = {
 
 
 void setup() {
-  interpretAndStoreUserDefinedPattern();
+  switch (pattern_to_use) {
+    case ZIG_ZAG:
+      setPattern(ZIG_ZAG_PATTERN);
+      break;
+    case LAP:
+      setPattern(LAP_PATTERN);
+      break;
+    case MANHATTAN_WALK:
+      setPattern(MANHATTAN_WALK_PATTERN);
+      break;
+  }
   disconnectAllPins();
 }
 
-void interpretAndStoreUserDefinedPattern() {
+
+
+void setPattern(int (*user_defined_pattern)[pattern_length][num_pattern_component_dimensions]) {
   for (int i = 0; i < num_tentacles; i++) {
     for (int j = 0; j < pattern_length; j++) {
       int user_defined_row = user_defined_pattern[i][j][INDEX_OF_CATHODE_PIN];
