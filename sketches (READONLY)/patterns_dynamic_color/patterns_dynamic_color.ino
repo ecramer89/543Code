@@ -16,7 +16,7 @@ const int ON = 14;
 const int num_tentacles = 2;
 const int num_pins_per_tentacle = 4;
 const int num_within_pattern_variants = 2;
-const int num_pattern_component_dimensions = 4;
+const int num_pattern_component_dimensions = 3;
 
 const int pattern_length = 8;
 
@@ -26,9 +26,9 @@ const int ZIG_ZAG = 0;
 const int LAP = 1;
 const int MANHATTAN_WALK = 2;
 
-int pattern_to_use = MANHATTAN_WALK; //infants-->sensitive to changes in patterns of movement. prefer to look at coherent rather than incoherent (random) motion patterns
-int color_to_use = GREEN; //infants-->sensitive to colour
-int delay_to_use = 800; //infants--> sensitive to motion velocity
+int pattern_to_use = LAP; //infants-->sensitive to changes in patterns of movement. prefer to look at coherent rather than incoherent (random) motion patterns
+int color_to_use = RED; //infants-->sensitive to colour
+int speed_to_use = 100; //infants--> sensitive to motion velocity
 
 int ZIG_ZAG_PATTERN[num_tentacles][pattern_length][num_within_pattern_variants] = {
   { //row | color | duration | on or off. (don't need to enter a meaningful row or colour if you want a section to be off, but do need to enter a duration)
@@ -112,11 +112,13 @@ int MANHATTAN_WALK_PATTERN[num_tentacles][pattern_length][num_within_pattern_var
 };
 
 
-int ROWS[num_tentacles][num_pins_per_tentacle] = {
+//indices of cathodes for each row.
+int CATHODES_PER_ROW[num_tentacles][num_pins_per_tentacle] = {
   {2, 3, 1, 0},
   {3, 0, 1, 2}
 };
 
+//indices of anodes (R,G,B) in each row. (Notice:
 int COLORS[num_tentacles][num_pins_per_tentacle][3] = {
   {
     {0, 1, 3},
@@ -135,7 +137,7 @@ int COLORS[num_tentacles][num_pins_per_tentacle][3] = {
 
 
 
-int default_duration_of_pattern_component = 200;
+
 int pins[num_tentacles][num_pins_per_tentacle] = {
   {1, 2, 3, 5},
   {8, 9, 10, 11}
@@ -149,15 +151,14 @@ const int INDEX_OF_USER_DEFINED_CATHODE_PIN = 0;
 const int INDEX_OF_USER_DEFINED_INSTRUCTION = 1;
 
 const int INDEX_OF_CATHODE_PIN = 0;
-const int INDEX_OF_ANODE_PIN = 1;
-const int INDEX_OF_DURATION = 2;
-const int INDEX_OF_INSTRUCTION = 3;
+const int INDEX_OF_ROW = 1;
+const int INDEX_OF_INSTRUCTION = 2;
 
 
 int index_of_current_pattern_component[num_tentacles] = {0, 0};
 int curr_pattern_component[num_tentacles][num_pattern_component_dimensions] = {
-  {0, 1, default_duration_of_pattern_component, ON},
-  {0, 1, default_duration_of_pattern_component, ON}
+  {0, 1, ON},
+  {0, 1, ON}
 };
 
 
@@ -166,25 +167,25 @@ int curr_pattern_component[num_tentacles][num_pattern_component_dimensions] = {
 //catode index, +1%4=red, +2%4=green, +3%4=blue anodes.
 int pattern[num_tentacles][pattern_length][num_pattern_component_dimensions] = {
   {
-    {0, 0, 0, OFF},
-    {0, 0, 0, OFF},
-    {0, 0, 0, OFF},
-    {0, 0, 0, OFF},
-    {0, 0, 0, OFF},
-    {0, 0, 0, OFF},
-    {0, 0, 0, OFF},
-    {0, 0, 0, OFF}
+    {0, 0, OFF},
+    {0, 0, OFF},
+    {0, 0, OFF},
+    {0, 0, OFF},
+    {0, 0, OFF},
+    {0, 0, OFF},
+    {0, 0, OFF},
+    {0, 0, OFF}
   },
 
   {
-    {0, 0, 0, OFF},
-    {0, 0, 0, OFF},
-    {0, 0, 0, OFF},
-    {0, 0, 0, OFF},
-    {0, 0, 0, OFF},
-    {0, 0, 0, OFF},
-    {0, 0, 0, OFF},
-    {0, 0, 0, OFF}
+    {0, 0, OFF},
+    {0, 0, OFF},
+    {0, 0, OFF},
+    {0, 0, OFF},
+    {0, 0, OFF},
+    {0, 0, OFF},
+    {0, 0, OFF},
+    {0, 0, OFF}
   }
 
 };
@@ -215,32 +216,27 @@ void setColor(int newColor) {
 
 
 void setSpeed(int newSpeed) {
-  delay_to_use = newSpeed;
+  speed_to_use = newSpeed;
 }
 
 void setPattern(int (*user_defined_pattern)[pattern_length][num_within_pattern_variants]) {
   for (int i = 0; i < num_tentacles; i++) {
     for (int j = 0; j < pattern_length; j++) {
       int user_defined_row = user_defined_pattern[i][j][INDEX_OF_USER_DEFINED_CATHODE_PIN];
-      int user_defined_color = color_to_use;
-      int user_defined_duration = delay_to_use;
       int user_defined_instruction = user_defined_pattern[i][j][INDEX_OF_USER_DEFINED_INSTRUCTION];
-
-      int cathode_given_row_tentacle = ROWS[i][user_defined_row];
-      int anode_given_row_tentacle_color = COLORS[i][user_defined_row][user_defined_color];
+      int cathode_given_row_tentacle = CATHODES_PER_ROW[i][user_defined_row];
 
       pattern[i][j][INDEX_OF_INSTRUCTION] = user_defined_instruction;
-      pattern[i][j][INDEX_OF_DURATION] = user_defined_duration;
       //in the user defined pattern, I wanted to just write the "OFF" value for each dimension. This conditional
       //just prevents me from writing the value of OFF to the anode and cathode pin indices.
       //
       if (user_defined_instruction == OFF) {
         pattern[i][j][INDEX_OF_CATHODE_PIN] = curr_pattern_component[num_tentacles][INDEX_OF_CATHODE_PIN];
-        pattern[i][j][INDEX_OF_ANODE_PIN] = curr_pattern_component[num_tentacles][INDEX_OF_ANODE_PIN];
+        pattern[i][j][INDEX_OF_ROW] = curr_pattern_component[num_tentacles][INDEX_OF_ROW];
       }
       else {
         pattern[i][j][INDEX_OF_CATHODE_PIN] = cathode_given_row_tentacle;
-        pattern[i][j][INDEX_OF_ANODE_PIN] = anode_given_row_tentacle_color;
+        pattern[i][j][INDEX_OF_ROW] = user_defined_row;
 
       }
     }
@@ -269,41 +265,49 @@ void updateTentaclePatternComponentIfNecessary(int index_of_tentacle) {
 }
 
 
-int s = 1000;
+
+
+int c=1000;
 void loop() {
   for (int i = 0; i < num_tentacles; i++) {
     updateTentaclePatternComponentIfNecessary(i);
   }
 
-  int r = millis() % 5000;
+if(millis()%c==0){
+  setColor(random(200)%3);
+}
 
-  if (r == 0) {
-    setSpeed(s);
-    s = 1060 - s;
-  }
+
+  
 }
 
 
 bool timeToSwitchPatternComponent(unsigned long curr_time, int index_of_tentacle) {
   unsigned long start_time_of_pattern_component_of_this_tentacle_current_pattern_component = start_time_of_pattern_component[index_of_tentacle];
-  //int duration_of_this_tentacle_current_pattern_component = duration_of_pattern_component[index_of_tentacle];
-  return abs(curr_time - start_time_of_pattern_component_of_this_tentacle_current_pattern_component) >= delay_to_use;//duration_of_this_tentacle_current_pattern_component;
+  return abs(curr_time - start_time_of_pattern_component_of_this_tentacle_current_pattern_component) >= speed_to_use;
 }
 
-int getActualPinValue(int index_of_tentacle, int pin_type_index) {
-  int index_of_pin = curr_pattern_component[index_of_tentacle][pin_type_index];
+
+int getIndexOfCathodePin(int index_of_tentacle) {
+  int index_of_pin = curr_pattern_component[index_of_tentacle][INDEX_OF_CATHODE_PIN];
+  return index_of_pin;
+}
+
+int getActualPinValue(int index_of_tentacle, int index_of_pin) {
   int actual_pin_value = pins[index_of_tentacle][index_of_pin];
   return actual_pin_value;
 }
 
 void disconnectCurrentAnode(int index_of_tentacle) {
-  int pin = getActualPinValue(index_of_tentacle, INDEX_OF_ANODE_PIN);
+  int index_of_anode = COLORS[index_of_tentacle][curr_pattern_component[index_of_tentacle][INDEX_OF_ROW]][color_to_use];
+  int pin = getActualPinValue(index_of_tentacle, index_of_anode);
   disconnect(pin);
 }
 
 
 void disconnectCurrentCathode(int index_of_tentacle) {
-  int pin = getActualPinValue(index_of_tentacle, INDEX_OF_CATHODE_PIN);
+  int index_of_cathode_pin = getIndexOfCathodePin(index_of_tentacle);
+  int pin = getActualPinValue(index_of_tentacle, index_of_cathode_pin);
   disconnect(pin);
 }
 
@@ -319,8 +323,6 @@ void setupNextPatternComponent(int index_of_tentacle) {
     lightupAnodeOfCurrentPatternCathode(index_of_tentacle);
   }
 
-
-  //setCurrentPatternComponentDuration(index_of_tentacle);
   start_time_of_pattern_component[index_of_tentacle] = millis();
 }
 
@@ -339,22 +341,18 @@ void setNextPatternComponent(int index_of_tentacle) {
 }
 
 void groundCathodeOfCurrentPatternComponent(int index_of_tentacle) {
-  int pin = getActualPinValue(index_of_tentacle, INDEX_OF_CATHODE_PIN);
+  int index_of_cathode_pin = getIndexOfCathodePin(index_of_tentacle);
+  int pin = getActualPinValue(index_of_tentacle, index_of_cathode_pin);
   makeGround(pin);
 }
 
 
 void lightupAnodeOfCurrentPatternCathode(int index_of_tentacle) {
-  int pin = getActualPinValue(index_of_tentacle, INDEX_OF_ANODE_PIN);
-
+  int index_of_anode = COLORS[index_of_tentacle][curr_pattern_component[index_of_tentacle][INDEX_OF_ROW]][color_to_use];
+  int pin = getActualPinValue(index_of_tentacle, index_of_anode);
   lightUp(pin);
 }
 
-
-
-void setCurrentPatternComponentDuration(int index_of_tentacle) {
-  //duration_of_pattern_component[index_of_tentacle] = curr_pattern_component[index_of_tentacle][INDEX_OF_DURATION];
-}
 
 
 void setIndexOfNextPatternComponent(int index_of_tentacle) {
