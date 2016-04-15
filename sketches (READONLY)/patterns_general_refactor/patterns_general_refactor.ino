@@ -80,12 +80,12 @@ const int pattern_length = 4;
 int user_defined_pattern[num_tentacles][pattern_length][num_pattern_component_dimensions] = {
   { //row | color | duration | on or off. (don't need to enter a meaningful row or colour if you want a section to be off, but do need to enter a duration)
     {FIRST, RED, 600, ON},
-    {SECOND, RED, 600, ON},
+    {SECOND, GREEN, 600, ON},
     {OFF, OFF, 600, OFF},
-    {THIRD, RED, 600, ON}
+    {THIRD, BLUE, 600, ON}
   },
   {
-    {THIRD, GREEN, 200, ON},
+    {THIRD, BLUE, 200, ON},
     {FOURTH, GREEN, 3000, ON},
     {FOURTH, RED, 200, ON},
     {OFF, OFF, 600, OFF}
